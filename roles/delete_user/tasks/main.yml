@@ -1,0 +1,49 @@
+- name: "Create Token for service Keycloak"
+  uri:
+    url: "{{ keycloak_base_url }}/auth/realms/master/protocol/openid-connect/token"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      username: "{{ keycloak_admin_user }}"
+      password: "{{ keycloak_admin_pass }}"
+      grant_type: "password"
+      client_id: "admin-cli"
+  register: keycloak_token
+
+- name: "Debug var keycloak_token"
+  debug:
+    msg: "{{ keycloak_token.json.access_token }}"
+
+- name: "Check admin user : Exit if admin usar is specified"
+  when: user_name == "admin"
+  ansible.builtin.meta: end_play
+
+- name: "Get current user id:"
+  uri:
+    url: "{{ keycloak_base_url }}/auth/admin/realms/{{ keycloak_realm_name }}/users?username={{ user_name }}"
+    method: GET
+    status_code:
+      - 200
+    headers:
+      Authorization: "Bearer {{ keycloak_token.json.access_token }}"
+  register: keycloak_user_info
+
+- name: "Debug var get current user"
+  debug:
+    msg: "{{ keycloak_user_info.json[0].id }}"
+
+- name: "Delete current user name:"
+  uri:
+    url: "{{ keycloak_base_url }}/auth/admin/realms/{{ keycloak_realm_name }}/users/{{ keycloak_user_info.json[0].id }}"
+    method: DELETE
+    status_code:
+      - 204
+    headers:
+      Content-type: "application/json"
+      Accept: "application/json"
+      Authorization: "Bearer {{ keycloak_token.json.access_token }}"
+  register: keycloak_user_delete
+
+- name: "Debug var delete current user"
+  debug:
+    msg: "{{ keycloak_user_delete }}"

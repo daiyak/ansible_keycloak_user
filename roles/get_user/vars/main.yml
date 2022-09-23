@@ -1,0 +1,5 @@
+keycloak_admin_user: "changeme"
+keycloak_admin_pass: "changeme"
+keycloak_base_url: "https://keycloak.server"
+keycloak_realm_name: "myrealm"
+user_name: "changeme"

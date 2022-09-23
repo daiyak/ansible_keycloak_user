@@ -1,0 +1,38 @@
+- name: "Create Token for service Keycloak"
+  uri:
+    url: "{{ keycloak_base_url }}/auth/realms/master/protocol/openid-connect/token"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      username: "{{ keycloak_admin_user }}"
+      password: "{{ keycloak_admin_pass }}"
+      grant_type: "password"
+      client_id: "admin-cli"
+  register: keycloak_token
+
+- name: "Debug var keycloak_token"
+  debug:
+    msg: "{{ keycloak_token.json.access_token }}"
+
+- name: "Create new user name:"
+  uri:
+    url: "{{ keycloak_base_url }}/auth/admin/realms/{{ keycloak_realm_name }}/users"
+    method: POST
+    status_code:
+      - 201
+    headers:
+      Content-type: "application/json"
+      Accept: "application/json"
+      Authorization: "Bearer {{ keycloak_token.json.access_token }}"
+    body_format: "json"
+    body:
+      firstName: "{{ user_firstname }}"
+      lastName: "{{ user_lastname }}"
+      email: "{{ user_email }}"
+      enabled: "{{ user_enabled }}"
+      username: "{{ user_username }}"
+  register: keycloak_user_create
+
+- name: "Debug var create new user"
+  debug:
+    msg: "{{ keycloak_user_create }}"
